@@ -1,61 +1,98 @@
+// rrd imports
 import { useLoaderData } from "react-router-dom";
-import { createBudget, fetchData } from "../helper";
-import Intro from "../Components/Intro";
+
+// library imports
 import { toast } from "react-toastify";
+
+// components
+import Intro from "../Components/Intro";
 import AddBudgetForm from "../Components/AddBudgetForm";
+import AddExpenseForm from "../Components/AddExpenseForm";
+
+//  helper functions
+import { createBudget, createExpense, fetchData, waait } from "../helper"
 
 // loader
 export function dashboardLoader() {
   const userName = fetchData("userName");
   const budgets = fetchData("budgets");
-  return { userName, budgets }; // ithu give username from local Storage
+  return { userName, budgets }
 }
+
+// action
 export async function dashboardAction({ request }) {
-  const Data = await request.formData();
-  const { _action, ...values } = Object.fromEntries(Data);
-  console.log(_action); //_action input field la irukura value read pannu la user vantha
-  //for new user ku
-  if (_action === "newUser")
+  await waait();
+
+  const data = await request.formData();
+  const { _action, ...values } = Object.fromEntries(data)
+
+  // new user submission
+  if (_action === "newUser") {
     try {
-      localStorage.setItem("userName", JSON.stringify(values.userName));
-      return toast.success("Welcome " + values.userName);
+      localStorage.setItem("userName", JSON.stringify(values.userName))
+      return toast.success(`Welcome, ${values.userName}`)
     } catch (e) {
-      throw new Error("There was a problem creating your account");
+      throw new Error("There was a problem creating your account.")
     }
+  }
+
   if (_action === "createBudget") {
     try {
-      createBudget({ name: values.newBudget, amount: values.newBudgetAmount });
-      return toast.success("Budget Added");
+      createBudget({
+        name: values.newBudget,
+        amount: values.newBudgetAmount,
+      })
+      return toast.success("Budget created!")
     } catch (e) {
-      throw new Error("There was a problem creating your budget");
+      throw new Error("There was a problem creating your budget.")
+    }
+  }
+
+  if (_action === "createExpense") {
+    try {
+      createExpense({
+        name: values.newExpense,
+        amount: values.newExpenseAmount,
+        budgetId: values.newExpenseBudget
+      })
+      return toast.success(`Expense ${values.newExpense} created!`)
+    } catch (e) {
+      throw new Error("There was a problem creating your expense.")
     }
   }
 }
 
 const Dashboard = () => {
-  const { userName, budgets } = useLoaderData();
+  const { userName, budgets } = useLoaderData()
 
   return (
     <>
       {userName ? (
         <div className="dashboard">
-          <h1>
-            Welcome buddy ,<span className="accent">{userName}</span>
-          </h1>
+          <h1>Welcome back, <span className="accent">{userName}</span></h1>
           <div className="grid-sm">
-            {/* {Budget Section} */}
-            <div className="grid-lg">
-              <div className="flex-lg">
-                <AddBudgetForm />
-              </div>
-            </div>
+            {
+              budgets && budgets.length > 0
+                ? (
+                  <div className="grid-lg">
+                    <div className="flex-lg">
+                      <AddBudgetForm />
+                      <AddExpenseForm budgets={budgets} />
+                    </div>
+                  </div>
+                )
+                : (
+                  <div className="grid-sm">
+                    <p>Personal budgeting is the secret to financial freedom.</p>
+                    <p>Create a budget to get started!</p>
+                    <AddBudgetForm />
+                  </div>
+                )
+            }
           </div>
         </div>
-      ) : (
-        <Intro />
-      )}
+      ) : <Intro />}
     </>
-  );
-};
-
-export default Dashboard;
+  )
+}
+export default Dashboard
