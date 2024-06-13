@@ -1,32 +1,26 @@
-// rrd imports
 import { useLoaderData } from "react-router-dom";
 
-// library imports
 import { toast } from "react-toastify";
 
-// components
 import Intro from "../Components/Intro";
 import AddBudgetForm from "../Components/AddBudgetForm";
 import AddExpenseForm from "../Components/AddExpenseForm";
 
-//  helper functions
 import { createBudget, createExpense, fetchData, waait } from "../helper"
+import BudgetItem from "../Components/BudgetItem";
 
-// loader
 export function dashboardLoader() {
   const userName = fetchData("userName");
   const budgets = fetchData("budgets");
   return { userName, budgets }
 }
 
-// action
 export async function dashboardAction({ request }) {
   await waait();
 
   const data = await request.formData();
   const { _action, ...values } = Object.fromEntries(data)
 
-  // new user submission
   if (_action === "newUser") {
     try {
       localStorage.setItem("userName", JSON.stringify(values.userName))
@@ -78,6 +72,16 @@ const Dashboard = () => {
                     <div className="flex-lg">
                       <AddBudgetForm />
                       <AddExpenseForm budgets={budgets} />
+                     <div>
+                     <h2>Existing Budgets</h2><br />
+                     <div className="budgets">
+                      {
+                         budgets.map((budget => (
+                           <BudgetItem key={budget.id} budget={budget} />)
+                         ) )
+                      }
+                     </div>
+                     </div>
                     </div>
                   </div>
                 )
